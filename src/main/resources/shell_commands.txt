@@ -1,0 +1,26 @@
+sudo docker-compose up -d
+sudo docker-compose ps
+sudo docker-compose stop
+sudo docker system prune -a --volumes --filter "label=io.confluent.docker"
+curl -X DELETE http://localhost:8081/subjects/winter2020_iuri_enriched_trip-value
+
+wget "https://sitewebbixi.s3.amazonaws.com/uploads/docs/biximontrealrentals2020-8e67d9.zip" -O temp.zip
+unzip temp.zip
+rm temp.zip
+rm stations.csv
+head -n 101 OD_2020.csv | tail -n 100 > Documents/FinalProject/sprint3v2/src/main/resources/100_trips.csv
+
+bin/kafka-topics.sh --zookeeper localhost:2181 --list
+bin/kafka-topics.sh --zookeeper localhost:2181 --create --replication-factor 1 --partitions 1 --topic winter2020_iuri_trip
+bin/kafka-topics.sh --zookeeper localhost:2181 --create --replication-factor 1 --partitions 1 --topic winter2020_iuri_enriched_trip
+
+bin/kafka-topics.sh --zookeeper localhost:2181 --describe --topic winter2020_iuri_enriched_trip
+bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic winter2020_iuri_trip
+sudo docker-compose exec broker kafka-topics --delete --topic winter2020_iuri_trip --bootstrap-server broker:9092
+
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic winter2020_iuri_trip
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic winter2020_iuri_enriched_trip
+
+
+bin/kafka-topics.sh --zookeeper quickstart.cloudera:2181 --create --replication-factor 1 --partitions 1 --topic winter2020_iuri_trip
+
